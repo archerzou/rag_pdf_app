@@ -18,12 +18,24 @@ def get_inngest_client() -> inngest.Inngest:
     return inngest.Inngest(app_id="rag_app", is_production=False)
 
 
+def sanitize_filename(filename: str) -> str:
+    return os.path.basename(filename)
+
+
 def save_uploaded_pdf(file) -> Path:
     uploads_dir = Path("uploads")
     uploads_dir.mkdir(parents=True, exist_ok=True)
-    file_path = uploads_dir / file.name
+
+    # Sanitize the filename to remove any directory paths
+    clean_filename = sanitize_filename(file.name)
+
+    # Create the file path with clean filename
+    file_path = uploads_dir / clean_filename
+
+    # Write the file
     file_bytes = file.getbuffer()
     file_path.write_bytes(file_bytes)
+
     return file_path
 
 
@@ -122,4 +134,6 @@ with st.form("rag_query_form"):
         if sources:
             st.caption("Sources")
             for s in sources:
-                st.write(f"- {s}")
+                # Sanitize sources one more time (defensive)
+                clean_source = sanitize_filename(s)
+                st.write(f"• {clean_source}")
